@@ -32,22 +32,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.debug(adjustResponse);
+
+    let trackerName = "InitializationError";
+
     if (!adjustResponse.ok) {
       const errorText = await adjustResponse.text();
       console.error("Adjust API error:", errorText);
-      return NextResponse.json(
-        { error: "Failed to fetch data from Adjust API" },
-        { status: adjustResponse.status }
-      );
+      // Continue with InitializationError as tracker name
+    } else {
+      try {
+        const adjustData: AdjustDeviceResponse = await adjustResponse.json();
+        trackerName = adjustData.TrackerName || "InitializationError";
+      } catch (parseError) {
+        console.error("Failed to parse Adjust API response:", parseError);
+        // Keep InitializationError as tracker name
+      }
     }
 
-    const adjustData: AdjustDeviceResponse = await adjustResponse.json();
-    const trackerName = adjustData.TrackerName;
-
     // Log for debugging
-    console.log("Original URL:", url);
-    console.log("ADID:", adid);
-    console.log("Tracker Name:", trackerName);
+    console.debug("Original URL:", url);
+    console.debug("ADID:", adid);
+    console.debug("Tracker Name:", trackerName);
 
     // Replace placeholders in the URL with actual values
     let redirectUrl = url
